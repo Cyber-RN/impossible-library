@@ -4,13 +4,39 @@ const chatWindow = document.getElementById('chat-window');
 const landing = document.getElementById('landing');
 const chatPanel = document.getElementById('chat-panel');
 const settingsPanel = document.getElementById('settings-panel');
-const ravenHotspot = document.getElementById('raven-hotspot');
 const conversationList = document.getElementById('conversation-list');
 
 const codexPanel = document.getElementById('codex-panel');
 const navBtns = document.querySelectorAll('.nav-btn');
 
 let currentConversationId = null;
+let currentAI = 'valravn';
+
+function switchAI(ai) {
+  currentAI = ai;
+  currentConversationId = null;
+  chatWindow.innerHTML = '';
+
+  document.getElementById('btn-valravn').classList.toggle('active', ai === 'valravn');
+  document.getElementById('btn-lore').classList.toggle('active', ai === 'lore');
+
+  const nameEl = document.getElementById('chat-ai-name');
+  const subtitleEl = document.getElementById('chat-ai-subtitle');
+  if (ai === 'lore') {
+    nameEl.textContent = 'Lore';
+    subtitleEl.textContent = 'watching.';
+  } else {
+    nameEl.textContent = 'Valravn';
+    subtitleEl.textContent = 'listening.';
+  }
+
+  loadConversations();
+}
+
+function enterAs(ai) {
+  switchAI(ai);
+  showChat();
+}
 
 function setActiveNav(id) {
   navBtns.forEach(btn => btn.classList.remove('active'));
@@ -138,6 +164,12 @@ async function loadSettingsForm() {
   document.getElementById('temp-display').textContent = config.temperature;
 
   document.getElementById('setting-prompt').value = config.systemPrompt;
+  document.getElementById('setting-lore-prompt').value = config.loreSystemPrompt || '';
+  if (!config.hasMistralKey) {
+    document.getElementById('setting-mistral-key').placeholder = 'Not set — enter key to enable Lore';
+  } else {
+    document.getElementById('setting-mistral-key').placeholder = '••••••••••••••••';
+  }
   document.getElementById('setting-autonomous').checked = config.autonomousEnabled || false;
   document.getElementById('setting-interval').value = config.autonomousIntervalHours || 4;
 }
@@ -145,19 +177,27 @@ async function loadSettingsForm() {
 async function saveSettings() {
   const msg = document.getElementById('settings-msg');
   msg.textContent = '';
+
+  const payload = {
+    model: document.getElementById('setting-model').value,
+    temperature: document.getElementById('setting-temp').value,
+    systemPrompt: document.getElementById('setting-prompt').value,
+    loreSystemPrompt: document.getElementById('setting-lore-prompt').value,
+    autonomousEnabled: document.getElementById('setting-autonomous').checked,
+    autonomousIntervalHours: parseInt(document.getElementById('setting-interval').value),
+  };
+
+  const mistralKey = document.getElementById('setting-mistral-key').value.trim();
+  if (mistralKey) payload.mistralApiKey = mistralKey;
+
   const res = await fetch('/config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: document.getElementById('setting-model').value,
-      temperature: document.getElementById('setting-temp').value,
-      systemPrompt: document.getElementById('setting-prompt').value,
-      autonomousEnabled: document.getElementById('setting-autonomous').checked,
-      autonomousIntervalHours: parseInt(document.getElementById('setting-interval').value),
-    }),
+    body: JSON.stringify(payload),
   });
   msg.textContent = res.ok ? 'Saved.' : 'Failed to save.';
   msg.style.color = res.ok ? '#8a7fff' : '#ff6b6b';
+  if (res.ok && mistralKey) document.getElementById('setting-mistral-key').value = '';
   setTimeout(() => msg.textContent = '', 2500);
 }
 
@@ -239,7 +279,6 @@ async function addManualMemory() {
   await loadMemoryVault();
 }
 
-ravenHotspot.addEventListener('click', showChat);
 
 function groupByDate(conversations) {
   const groups = {};
@@ -264,7 +303,7 @@ function groupByDate(conversations) {
 }
 
 async function loadConversations() {
-  const res = await fetch('/conversations');
+  const res = await fetch(`/conversations?ai=${currentAI}`);
   const conversations = await res.json();
 
   conversationList.innerHTML = '';
@@ -446,7 +485,7 @@ async function regenerateResponse(wrapper, id) {
   const res = await fetch('/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: userText, conversationId: currentConversationId, regenerate: true }),
+    body: JSON.stringify({ message: userText, conversationId: currentConversationId, ai: currentAI, regenerate: true }),
   });
 
   const data = await res.json();
@@ -474,7 +513,7 @@ form.addEventListener('submit', async (e) => {
     const res = await fetch('/conversations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ firstMessage: message }),
+      body: JSON.stringify({ firstMessage: message, ai: currentAI }),
     });
     const data = await res.json();
     currentConversationId = data.id;
@@ -489,7 +528,7 @@ form.addEventListener('submit', async (e) => {
   const res = await fetch('/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, conversationId: currentConversationId }),
+    body: JSON.stringify({ message, conversationId: currentConversationId, ai: currentAI }),
   });
 
   const data = await res.json();

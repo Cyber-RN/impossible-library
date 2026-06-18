@@ -1,17 +1,18 @@
 import pool from './db.js';
 
-async function createConversation(firstMessage) {
+async function createConversation(firstMessage, ai = 'valravn') {
   const title = firstMessage.slice(0, 50);
   const result = await pool.query(
-    'INSERT INTO conversations (title) VALUES ($1) RETURNING id',
-    [title]
+    'INSERT INTO conversations (title, ai) VALUES ($1, $2) RETURNING id',
+    [title, ai]
   );
   return result.rows[0].id;
 }
 
-async function getConversations() {
+async function getConversations(ai = 'valravn') {
   const result = await pool.query(
-    'SELECT id, title, created_at FROM conversations ORDER BY created_at DESC'
+    'SELECT id, title, created_at FROM conversations WHERE ai = $1 ORDER BY created_at DESC',
+    [ai]
   );
   return result.rows;
 }

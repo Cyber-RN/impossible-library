@@ -33,7 +33,12 @@
 
   <!-- Landing View -->
   <div id="landing">
-    <div id="raven-hotspot" title="Enter the Library"></div>
+    <div class="raven-hotspot" id="hotspot-valravn" onclick="enterAs('valravn')">
+      <span class="raven-name">Valravn</span>
+    </div>
+    <div class="raven-hotspot" id="hotspot-lore" onclick="enterAs('lore')">
+      <span class="raven-name">Lore</span>
+    </div>
   </div>
 
   <!-- Chat Panel -->
@@ -42,6 +47,10 @@
 
       <!-- Sidebar -->
       <div id="sidebar">
+        <div id="ai-selector">
+          <button class="ai-btn active" id="btn-valravn" onclick="switchAI('valravn')">🐦‍⬛ Valravn</button>
+          <button class="ai-btn" id="btn-lore" onclick="switchAI('lore')">🐦‍⬛ Lore</button>
+        </div>
         <button id="new-chat-btn" onclick="newConversation()">+ New Conversation</button>
         <div id="conversation-list"></div>
       </div>
@@ -49,8 +58,8 @@
       <!-- Main Chat -->
       <div id="chat-main">
         <div id="chat-header">
-          <h1>Valravn</h1>
-          <p class="subtitle">listening.</p>
+          <h1 id="chat-ai-name">Valravn</h1>
+          <p class="subtitle" id="chat-ai-subtitle">listening.</p>
         </div>
         <div id="chat-window"></div>
         <div id="input-wrap">
@@ -93,10 +102,20 @@
         <input type="range" id="setting-temp" min="0" max="2" step="0.05" value="0.8" oninput="document.getElementById('temp-display').textContent = this.value">
       </div>
 
-      <div class="settings-section-title">Persona</div>
+      <div class="settings-section-title">Valravn — Persona</div>
       <div class="settings-item column">
         <label>System Prompt</label>
         <textarea id="setting-prompt" rows="6"></textarea>
+      </div>
+
+      <div class="settings-section-title">Lore — Persona</div>
+      <div class="settings-item column">
+        <label>System Prompt</label>
+        <textarea id="setting-lore-prompt" rows="6"></textarea>
+      </div>
+      <div class="settings-item column">
+        <label>Mistral API Key</label>
+        <input type="password" id="setting-mistral-key" autocomplete="off" placeholder="sk-...">
       </div>
 
       <div class="settings-item save-row">

@@ -6,6 +6,7 @@ import pool from './db.js';
 import { createConversation, getConversations, saveMessage, getHistory, deleteMessage, renameConversation, clearConversation } from './memory.js';
 import { extractMemories, saveMemories, loadMemories, touchMemories, deleteMemory, addMemory, decayMemories } from './longterm.js';
 import { chat, getModels } from './llm.js';
+import { chatMistral } from './mistral.js';
 import { readConfig, writeConfig } from './config.js';
 import { saveCodexEntry, getCodexEntries, deleteCodexEntry, promoteToMemory } from './codex.js';
 import { startAutonomousLoop, stopAutonomousLoop, runAutonomousCycle } from './autonomous.js';
@@ -59,11 +60,16 @@ app.get('/config', (req, res) => {
     systemPrompt: config.systemPrompt,
     autonomousEnabled: config.autonomousEnabled,
     autonomousIntervalHours: config.autonomousIntervalHours,
+    loreModel: config.loreModel,
+    loreSystemPrompt: config.loreSystemPrompt,
+    hasMistralKey: !!config.mistralApiKey,
   });
 });
 
 app.post('/config', (req, res) => {
-  const { model, temperature, systemPrompt, password, currentPassword } = req.body;
+  const { model, temperature, systemPrompt, password, currentPassword,
+          autonomousEnabled, autonomousIntervalHours,
+          loreModel, loreSystemPrompt, mistralApiKey } = req.body;
   const config = readConfig();
 
   const updates = {};
@@ -71,7 +77,10 @@ app.post('/config', (req, res) => {
   if (temperature !== undefined) updates.temperature = parseFloat(temperature);
   if (systemPrompt !== undefined) updates.systemPrompt = systemPrompt;
   if (autonomousEnabled !== undefined) updates.autonomousEnabled = autonomousEnabled;
-  if (req.body.autonomousIntervalHours !== undefined) updates.autonomousIntervalHours = parseInt(req.body.autonomousIntervalHours);
+  if (autonomousIntervalHours !== undefined) updates.autonomousIntervalHours = parseInt(autonomousIntervalHours);
+  if (loreModel !== undefined) updates.loreModel = loreModel;
+  if (loreSystemPrompt !== undefined) updates.loreSystemPrompt = loreSystemPrompt;
+  if (mistralApiKey !== undefined) updates.mistralApiKey = mistralApiKey;
   if (password && currentPassword) {
     if (currentPassword !== config.password) {
       return res.status(401).json({ error: 'Current password is incorrect.' });
@@ -80,7 +89,7 @@ app.post('/config', (req, res) => {
   }
 
   const next = writeConfig(updates);
-  res.json({ ok: true, config: { model: next.model, temperature: next.temperature, systemPrompt: next.systemPrompt } });
+  res.json({ ok: true });
 });
 
 app.get('/models', async (req, res) => {
@@ -89,13 +98,14 @@ app.get('/models', async (req, res) => {
 });
 
 app.get('/conversations', async (req, res) => {
-  const conversations = await getConversations();
+  const ai = req.query.ai || 'valravn';
+  const conversations = await getConversations(ai);
   res.json(conversations);
 });
 
 app.post('/conversations', async (req, res) => {
-  const { firstMessage } = req.body;
-  const id = await createConversation(firstMessage);
+  const { firstMessage, ai = 'valravn' } = req.body;
+  const id = await createConversation(firstMessage, ai);
   res.json({ id });
 });
 
@@ -105,7 +115,7 @@ app.get('/conversations/:id', async (req, res) => {
 });
 
 app.post('/chat', async (req, res) => {
-  const { message, conversationId } = req.body;
+  const { message, conversationId, ai = 'valravn' } = req.body;
   const config = readConfig();
 
   await saveMessage(conversationId, 'user', message);
@@ -123,14 +133,25 @@ app.post('/chat', async (req, res) => {
     await touchMemories(memories.map(m => m.id));
   }
 
+  const now = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'full', timeStyle: 'short' });
+
+  const systemPrompt = ai === 'lore' ? config.loreSystemPrompt : config.systemPrompt;
+
   const messages = [
-    { role: 'system', content: config.systemPrompt + memoryBlock },
+    { role: 'system', content: systemPrompt + `\n\nCurrent date and time: ${now}` + memoryBlock },
     ...history,
   ];
 
-  const raw = await chat(messages, config.model, config.temperature);
+  let raw;
+  if (ai === 'lore') {
+    if (!config.mistralApiKey) return res.status(400).json({ error: 'Mistral API key not configured.' });
+    raw = await chatMistral(messages, config.mistralApiKey, config.loreModel, config.temperature);
+  } else {
+    raw = await chat(messages, config.model, config.temperature);
+  }
+
   const reply = raw
-    .replace(/^\s*valravn\s*:/i, '')
+    .replace(/^\s*(valravn|lore)\s*:/i, '')
     .replace(/\(V\s+alravn/gi, '(Valravn')
     .replace(/V\s+alravn/gi, 'Valravn')
     .replace(/\([^)]*\)/g, '')
