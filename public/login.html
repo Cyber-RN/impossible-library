@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Impossible Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Text:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-color: #0d0d0d;
+      color: #c9c9c9;
+      font-family: 'Crimson Text', Georgia, serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-image: url('library-desktop.png');
+      background-size: cover;
+      background-position: center;
+    }
+
+    #gate {
+      background: rgba(8, 6, 18, 0.88);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(138, 127, 255, 0.2);
+      padding: 3rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      min-width: 320px;
+    }
+
+    h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #8a7fff;
+      letter-spacing: 0.2em;
+      text-align: center;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #444;
+      letter-spacing: 0.05em;
+      margin-top: -1rem;
+    }
+
+    input[type="password"] {
+      width: 100%;
+      background: #0a0a14;
+      border: 1px solid #2a2840;
+      color: #c9c9c9;
+      padding: 0.75rem 1rem;
+      font-family: 'Crimson Text', Georgia, serif;
+      font-size: 1.1rem;
+      outline: none;
+      text-align: center;
+      letter-spacing: 0.2em;
+    }
+
+    input[type="password"]:focus {
+      border-color: #8a7fff;
+    }
+
+    button {
+      width: 100%;
+      background: none;
+      border: 1px solid #8a7fff;
+      color: #8a7fff;
+      padding: 0.75rem;
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.15em;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    button:hover {
+      background: #8a7fff;
+      color: #0d0d0d;
+    }
+
+    #error {
+      color: #ff6b6b;
+      font-size: 0.85rem;
+      min-height: 1.2rem;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+  <div id="gate">
+    <h1>THE IMPOSSIBLE LIBRARY</h1>
+    <p class="subtitle">speak the word</p>
+    <input type="password" id="pw" placeholder="••••••••" autofocus />
+    <button onclick="attempt()">Enter</button>
+    <div id="error"></div>
+  </div>
+
+  <script>
+    document.getElementById('pw').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') attempt();
+    });
+
+    async function attempt() {
+      const password = document.getElementById('pw').value;
+      const err = document.getElementById('error');
+      err.textContent = '';
+
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+
+      if (res.ok) {
+        window.location.href = '/';
+      } else {
+        err.textContent = 'the library does not recognize you.';
+        document.getElementById('pw').value = '';
+        document.getElementById('pw').focus();
+      }
+    }
+  </script>
+</body>
+</html>
