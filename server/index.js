@@ -1,4 +1,7 @@
+import https from 'https';
+import { readFileSync } from 'fs';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { join, dirname } from 'path';
@@ -16,6 +19,27 @@ process.on('unhandledRejection', (reason) => console.error('REJECTION:', reason)
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+let tlsOptions;
+try {
+  tlsOptions = {
+    cert: readFileSync(join(__dirname, 'certs/cert.pem')),
+    key:  readFileSync(join(__dirname, 'certs/key.pem')),
+  };
+} catch {
+  console.error('TLS certificates not found. Run from the project root:');
+  console.error('  mkdir server\\certs');
+  console.error('  mkcert -cert-file server/certs/cert.pem -key-file server/certs/key.pem <your-local-ip> localhost 127.0.0.1');
+  process.exit(1);
+}
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many login attempts. Try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const SESSION_TOKEN = crypto.randomBytes(32).toString('hex');
 
@@ -36,11 +60,11 @@ app.use(express.json());
 app.use(requireAuth);
 app.use(express.static(join(__dirname, '../public')));
 
-app.post('/login', (req, res) => {
+app.post('/login', loginLimiter, (req, res) => {
   const { password } = req.body;
   const config = readConfig();
   if (password === config.password) {
-    res.setHeader('Set-Cookie', `session=${SESSION_TOKEN}; HttpOnly; Path=/; SameSite=Strict`);
+    res.setHeader('Set-Cookie', `session=${SESSION_TOKEN}; HttpOnly; Secure; Path=/; SameSite=Strict`);
     res.json({ ok: true });
   } else {
     res.status(401).json({ error: 'incorrect' });
@@ -233,8 +257,8 @@ runDecay();
 setInterval(runDecay, 24 * 60 * 60 * 1000);
 startAutonomousLoop();
 
-const server = app.listen(3001, () => {
-  console.log('The Impossible Library is open on port 3001');
+const server = https.createServer(tlsOptions, app).listen(3001, () => {
+  console.log('The Impossible Library is open on https://localhost:3001');
 });
 
 server.on('error', (err) => console.error('Server error:', err));

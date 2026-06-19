@@ -144,3 +144,6 @@ vite.config.ts.timestamp-*
 
 # Local config (contains password — never commit)
 server/config.json
+
+# TLS certificates — never commit private keys
+server/certs/
