@@ -346,9 +346,18 @@ async function loadConversations() {
   });
 }
 
+function toggleSidebar() {
+  document.getElementById('chat-panel').classList.toggle('sidebar-open');
+}
+
+function closeSidebar() {
+  document.getElementById('chat-panel').classList.remove('sidebar-open');
+}
+
 async function loadConversation(id) {
   currentConversationId = id;
   chatWindow.innerHTML = '';
+  closeSidebar();
 
   const res = await fetch(`/conversations/${id}`);
   const messages = await res.json();
@@ -564,6 +573,14 @@ async function renameConversation(item, id, current) {
   renameInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') renameInput.blur();
     if (e.key === 'Escape') { saved = true; loadConversations(); }
+  });
+}
+
+// Keep input visible when mobile keyboard opens (iOS fix)
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const keyboardHeight = Math.max(0, window.innerHeight - window.visualViewport.height);
+    document.getElementById('chat-panel').style.bottom = (60 + keyboardHeight) + 'px';
   });
 }
 

@@ -966,3 +966,140 @@ body {
   background: #8a7fff;
   color: #0d0d0d;
 }
+
+/* ── Sidebar Toggle (desktop: hidden) ─────── */
+
+#sidebar-toggle {
+  display: none;
+}
+
+/* ── Mobile ──────────────────────────────── */
+
+@media (max-width: 767px) {
+
+  /* Sidebar slides in as overlay */
+  #sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 60px;
+    width: 280px;
+    min-width: 280px;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+
+  .sidebar-open #sidebar {
+    transform: translateX(0);
+  }
+
+  #sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 199;
+  }
+
+  .sidebar-open #sidebar-backdrop {
+    display: block;
+  }
+
+  /* Chat fills full width */
+  #chat-layout {
+    display: block;
+    height: 100%;
+  }
+
+  #chat-main {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Hamburger button */
+  #sidebar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    flex-shrink: 0;
+    transition: color 0.2s;
+  }
+
+  #sidebar-toggle:hover {
+    color: #8a7fff;
+  }
+
+  #chat-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+
+  #chat-window {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+
+  #chat-window > * {
+    max-width: 100%;
+  }
+
+  #input-wrap {
+    padding: 0.6rem 0.75rem 0.75rem;
+  }
+
+  .message-wrapper.user .message {
+    max-width: 88%;
+  }
+
+  .message-wrapper.assistant .message {
+    max-width: 96%;
+  }
+
+  /* Always show message actions on touch */
+  .message-actions {
+    display: flex;
+  }
+
+  .reaction-picker {
+    display: flex;
+  }
+
+  /* Always show conversation edit button on touch */
+  .edit-btn {
+    opacity: 1;
+  }
+
+  /* Always show raven names on touch */
+  .raven-name {
+    opacity: 1;
+  }
+
+  /* Codex */
+  #codex-header {
+    padding: 0.75rem 1rem;
+  }
+
+  #codex-list {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  /* Settings */
+  #settings-header {
+    padding: 0.75rem 1rem;
+  }
+
+  #settings-body {
+    padding: 1rem 1rem 3rem;
+  }
+}

@@ -173,6 +173,61 @@ Open `http://localhost:3001` in your browser.
 
 ---
 
+## Running Without a Terminal (Windows Auto-Start)
+
+Install PM2 globally, then run the following in an **admin PowerShell**:
+
+```powershell
+npm install -g pm2
+pm2 start server/index.js --name impossible-library
+pm2 save
+```
+
+Create a Task Scheduler task so the server starts automatically when you log in:
+
+```powershell
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-WindowStyle Hidden -NonInteractive -Command `"pm2 resurrect`""
+$trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+$settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Hours 0)
+Register-ScheduledTask -TaskName "Impossible Library" -Action $action -Trigger $trigger -Settings $settings -RunLevel Highest -Force
+```
+
+The server now starts in the background on login with no terminal window required.
+
+**Useful PM2 commands:**
+- `pm2 restart impossible-library` — restart after config changes
+- `pm2 logs impossible-library` — view server output
+- `pm2 stop impossible-library` — stop the server
+- `pm2 status` — check if it's running
+
+---
+
+## Mobile Access (Same Wi-Fi Network)
+
+The UI is fully responsive and works on mobile browsers.
+
+### 1. Open the firewall port (admin PowerShell, one time)
+
+```powershell
+New-NetFirewallRule -DisplayName "Impossible Library" -Direction Inbound -Protocol TCP -LocalPort 3001 -Action Allow
+```
+
+### 2. Find your PC's local IP
+
+```powershell
+ipconfig
+```
+
+Look for the **IPv4 Address** under your Wi-Fi adapter (e.g. `192.168.1.x`).
+
+### 3. Open on your phone
+
+Navigate to `http://192.168.1.x:3001` in your phone's browser while on the same Wi-Fi network.
+
+> **Note:** Both Valravn (local Ollama) and Lore (Mistral API) require your PC to be running — the server is the intermediary for all AI calls, including cloud ones.
+
+---
+
 ## Security Notes
 
 - `server/config.json` is excluded from version control via `.gitignore` — it contains your password and should never be committed

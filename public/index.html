@@ -43,6 +43,7 @@
 
   <!-- Chat Panel -->
   <div id="chat-panel" class="panel hidden">
+    <div id="sidebar-backdrop" onclick="closeSidebar()"></div>
     <div id="chat-layout">
 
       <!-- Sidebar -->
@@ -58,8 +59,11 @@
       <!-- Main Chat -->
       <div id="chat-main">
         <div id="chat-header">
-          <h1 id="chat-ai-name">Valravn</h1>
-          <p class="subtitle" id="chat-ai-subtitle">listening.</p>
+          <button id="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+          <div>
+            <h1 id="chat-ai-name">Valravn</h1>
+            <p class="subtitle" id="chat-ai-subtitle">listening.</p>
+          </div>
         </div>
         <div id="chat-window"></div>
         <div id="input-wrap">
