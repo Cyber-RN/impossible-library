@@ -142,7 +142,7 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 
-# Local config (contains password — never commit)
+# Local config (contains password and Mistral API key — never commit)
 server/config.json
 
 # TLS certificates — never commit private keys
