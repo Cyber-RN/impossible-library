@@ -201,6 +201,29 @@ async function saveSettings() {
   setTimeout(() => msg.textContent = '', 2500);
 }
 
+async function saveSettingsBottom() {
+  await saveSettings();
+  const msg = document.getElementById('settings-msg-bottom');
+  const top = document.getElementById('settings-msg');
+  msg.textContent = top.textContent;
+  msg.style.color = top.style.color;
+  setTimeout(() => msg.textContent = '', 2500);
+}
+
+async function restartServer() {
+  const btn = document.getElementById('restart-btn');
+  btn.textContent = 'Restarting...';
+  btn.disabled = true;
+  await fetch('/restart', { method: 'POST' }).catch(() => {});
+  const poll = setInterval(async () => {
+    try {
+      await fetch('/config');
+      clearInterval(poll);
+      location.reload();
+    } catch {}
+  }, 1000);
+}
+
 async function changePassword() {
   const msg = document.getElementById('pw-msg');
   msg.textContent = '';

@@ -164,6 +164,16 @@
         <button onclick="window.location.href='/logout'">Log Out</button>
       </div>
 
+      <div class="settings-section-title">Server</div>
+      <div class="settings-item save-row">
+        <span id="settings-msg-bottom"></span>
+        <button onclick="saveSettingsBottom()">Save Changes</button>
+      </div>
+      <div class="settings-item">
+        <span>Restart server</span>
+        <button id="restart-btn" onclick="restartServer()">Restart</button>
+      </div>
+
       <div id="memory-vault">
         <div class="vault-header">
           <span>Memory Vault</span>

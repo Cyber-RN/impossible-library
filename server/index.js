@@ -246,6 +246,11 @@ app.post('/autonomous/run', async (req, res) => {
   res.json({ ok: true, message: 'Cycle started.' });
 });
 
+app.post('/restart', (req, res) => {
+  res.json({ ok: true });
+  setTimeout(() => process.exit(0), 300);
+});
+
 function runDecay() {
   const config = readConfig();
   decayMemories(config.decayAfterDays, config.decayMinReferences)
