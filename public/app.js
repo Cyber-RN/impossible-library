@@ -364,6 +364,16 @@ async function loadConversations() {
       });
       item.appendChild(editBtn);
 
+      const delBtn = document.createElement('span');
+      delBtn.className = 'edit-btn';
+      delBtn.textContent = '🗑';
+      delBtn.title = 'Delete';
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteConversationById(c.id);
+      });
+      item.appendChild(delBtn);
+
       conversationList.appendChild(item);
     });
   });
@@ -605,6 +615,17 @@ if (window.visualViewport) {
     const keyboardHeight = Math.max(0, window.innerHeight - window.visualViewport.height);
     document.getElementById('chat-panel').style.bottom = (60 + keyboardHeight) + 'px';
   });
+}
+
+async function deleteConversationById(id) {
+  const confirmed = confirm('Delete this conversation? This cannot be undone.');
+  if (!confirmed) return;
+  await fetch(`/clear/${id}`, { method: 'POST' });
+  if (currentConversationId === id) {
+    currentConversationId = null;
+    chatWindow.innerHTML = '';
+  }
+  await loadConversations();
 }
 
 async function deleteCurrentConversation() {
